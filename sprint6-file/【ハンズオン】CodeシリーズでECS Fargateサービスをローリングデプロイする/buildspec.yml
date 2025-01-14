@@ -1,0 +1,21 @@
+version: 0.2
+env:
+  variables:
+    ECR_REPO_NAME: <ご自身のECRリポジトリ名を記載。両側の角カッコを含め削除してください。>
+phases:
+  pre_build:
+    commands:
+      - echo "hello"
+      
+      #ECR login
+      - ECR_MAIN_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+      - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_MAIN_URI}
+
+      - ECR_IMAGE_URI="${ECR_MAIN_URI}/${ECR_REPO_NAME}:latest"
+  build:
+    commands:
+      - docker build -t ${ECR_REPO_NAME}:latest .
+  post_build:
+    commands:
+      - docker tag ${ECR_REPO_NAME}:latest ${ECR_IMAGE_URI}
+      - docker push ${ECR_IMAGE_URI}

@@ -1,4 +1,6 @@
-#### 【ハンズオン】VPCエンドポイント-デモ / VPC内部DNSの動きについて補足
+<details>
+  <summary> 【ハンズオン】VPCエンドポイント-デモ / VPC内部DNSの動きについて補足
+</summary>
 
 **コマンドメモ**
 
@@ -30,9 +32,13 @@
 
 [【ハンズオン】CloudFrontとS3のOAC機能デモ](https://kws-cloud-tech.com/topic/%E3%80%90%E3%83%8F%E3%83%B3%E3%82%BA%E3%82%AA%E3%83%B3%E3%80%91cloudfront%E3%81%A8s3%E3%81%AEoac%E6%A9%9F%E8%83%BD%E3%83%87%E3%83%A2)
 
+</details>
+
 ---
 
-#### 【ハンズオン】CloudFrontとS3のOAC機能デモ
+<details>
+  <summary> 【ハンズオン】CloudFrontとS3のOAC機能デモ
+</summary>
 
 ```html
 <!DOCTYPE html>
@@ -46,9 +52,13 @@
   </body>
 </html>
 ```
+</details>
 
 ---
-#### 【ハンズオン】独自ドメインとHTTPSによるWebサイトのホスティング
+
+<details>
+  <summary> 【ハンズオン】独自ドメインとHTTPSによるWebサイトのホスティング
+</summary>
 
 **index.html**
 
@@ -90,3 +100,4 @@
   ```bash
   sudo vi index.html
   ```
+</details>

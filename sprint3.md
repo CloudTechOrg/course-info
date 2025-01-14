@@ -1,4 +1,6 @@
-### 【ハンズオン】起動テンプレート作成/ALBとAutoScalingを組み合わせたハンズオン
+<details>
+  <summary> 【ハンズオン】起動テンプレート作成/ALBとAutoScalingを組み合わせたハンズオン
+</summary>
 
 #### ユーザーデータ
 
@@ -49,13 +51,16 @@ q
 ```bash
 pkill yes
 ```
+</details>
 
 ---
-### 【ハンズオン】CloudWatchアラーム設定とSNSによるメール通知設定
+<details>
+  <summary>  【ハンズオン】CloudWatchアラーム設定とSNSによるメール通知設定
+  </summary>
 
 #### CPUに負荷をかけて使用率を上げるコマンド
+
 ```bash
 sudo yum install -y stress
 stress --cpu 1 --timeout 600
 ```
----
