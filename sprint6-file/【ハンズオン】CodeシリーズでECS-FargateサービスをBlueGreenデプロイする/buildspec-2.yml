@@ -30,3 +30,4 @@ artifacts:
     - appspec.yml
     - taskdef.json
     - imageDetail.json
+    
