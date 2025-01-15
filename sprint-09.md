@@ -486,3 +486,9 @@ aws sqs send-message-batch --queue-url https://sqs.ap-northeast-1.amazonaws.com/
 
 ```
 
+</details>
+
+### クラウドエンジニアのためのPython講座
+
+ファイル等は以下にまとめられています。  
+[クラウドエンジニアのためのPython講座リポジトリへのリンク](https://github.com/CloudTechOrg/course-python)

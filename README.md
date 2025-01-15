@@ -20,6 +20,3 @@
 - [スプリント12](https://github.com/CloudTechOrg/course-info/blob/main/sprint-12.md)
 - [スプリント13](https://github.com/CloudTechOrg/course-info/blob/main/sprint-13-extra.md)
 
-## 学習サイト
-
-[CloudTech学習サイト](https://kws-cloud-tech.com/)
