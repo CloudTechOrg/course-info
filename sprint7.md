@@ -17,12 +17,14 @@ https://developer.hashicorp.com/terraform/install?product_intent=terraform
 
 </details>
 
+---
+
 <details>
   <summary> 【Terraform】ハンズオン-VPC,サブネットの作成【20:27】
   </summary> 
 
 #### プロバイダブロックの作成
-```json
+```hcl
 provider "aws" {
  region = "ap-northeast-1"
 }
@@ -40,7 +42,7 @@ export AWS_SECRET_ACCESS_KEY=your_secret_access_key
 ```
 
 #### VPCのresourceブロックの作成
-```json
+```hcl
 resource "aws_vpc" "terra_vpc" {
 
   cidr_block = "10.0.0.0/16"
@@ -51,7 +53,7 @@ resource "aws_vpc" "terra_vpc" {
 ```
 
 #### VPCの名前の変更
-```json
+```hcl
 resource "aws_vpc" "terra_vpc" {
 
   cidr_block = "10.0.0.0/16"
@@ -62,7 +64,7 @@ resource "aws_vpc" "terra_vpc" {
 ```
 
 #### サブネットのリソース追加
-```json
+```hcl
 resource "aws_subnet" "terra_subnet" {
 
   vpc_id = aws_vpc.terra_vpc.id
@@ -74,6 +76,8 @@ resource "aws_subnet" "terra_subnet" {
 }
 ```
 </details>
+
+---
 
 <details>
   <summary> 【Terraform】ハンズオン-Webサーバーの作成（locals,variablesブロック）【13:41】
@@ -91,7 +95,7 @@ export AWS_SECRET_ACCESS_KEY=your_secret_access_key
 ```
 
 #### VPCリソースの作成（準備）
-```json
+```hcl
 provider "aws" {
  region = "ap-northeast-1"
 }
@@ -117,7 +121,7 @@ resource "aws_subnet" "web_subnet" {
 ```
 
 #### ローカル変数app_nameを追加
-```json
+```hcl
 provider "aws" {
  region = "ap-northeast-1"
 }
@@ -147,7 +151,7 @@ resource "aws_subnet" "web_subnet" {
 ```
 
 #### 入力変数envを追加
-```json
+```hcl
 provider "aws" {
  region = "ap-northeast-1"
 }
@@ -182,7 +186,7 @@ resource "aws_subnet" "web_subnet" {
 ```
 
 #### ローカル変数 name_prefix = "${var.env}-${local.app_name} を追加
-```json
+```hcl
 provider "aws" {
  region = "ap-northeast-1"
 }
@@ -217,7 +221,7 @@ resource "aws_subnet" "web_subnet" {
 ```
 
 #### webサーバ用のmain.tf
-```json
+```hcl
 provider "aws" {
  region = "ap-northeast-1"
 }
@@ -336,6 +340,8 @@ HTML
 ```
 </details>
 
+---
+
 <details>
   <summary> 【CloudFormation】CloudFormationでVPCを作成する
   </summary> 
@@ -354,6 +360,8 @@ Resources:
           Value: "MyVPCfromCF"
 ```
 </details>
+
+---
 
 <details>
   <summary> 
@@ -385,6 +393,8 @@ Resources:
           Value: !Ref Name
 ```
 </details>
+
+---
 
 <details>
   <summary> 
@@ -429,6 +439,7 @@ Resources:
 ```
 </details>
 
+---
 
 <details>
   <summary> 
@@ -521,6 +532,8 @@ Resources:
 ```
 </details>
 
+---
+
 <details>
   <summary> 
 「VisualStudioCode RemoteSSH拡張機能」でEC2インスタンスのファイルを便利に編集する方法
@@ -536,6 +549,8 @@ Host WebServer1
 ```
 
 </details>
+
+---
 
 <details>
   <summary> 
@@ -561,6 +576,8 @@ aws cloudformation deploy --template-file stack_s3_param.yml --stack-name s3buck
 aws cloudformation delete-stack --stack-name s3bucketcreate
 ```
 </details>
+
+---
 
 <details>
   <summary> 
@@ -602,6 +619,7 @@ aws cloudformation delete-stack --stack-name s3bucketcreate
 ```
 </details>
 
+---
 
 <details>
   <summary> 
