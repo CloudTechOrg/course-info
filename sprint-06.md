@@ -1,12 +1,12 @@
-[【ハンズオン】CodeシリーズでS3バケットの静的ウェブサイトホスティングを自動デプロイする](/sprint6-file/【ハンズオン】CodeシリーズでS3バケットの静的ウェブサイトホスティングを自動デプロイする)
+[【ハンズオン】CodeシリーズでS3バケットの静的ウェブサイトホスティングを自動デプロイする](/sprint-06-file/【ハンズオン】CodeシリーズでS3バケットの静的ウェブサイトホスティングを自動デプロイする)
 
 ---
 
-[【ハンズオン】CodeシリーズでECS Fargateサービスをローリングデプロイする](/sprint6-file/【ハンズオン】CodeシリーズでECS-Fargateサービスをローリングデプロイする)
+[【ハンズオン】CodeシリーズでECS Fargateサービスをローリングデプロイする](/sprint-06-file/【ハンズオン】CodeシリーズでECS-Fargateサービスをローリングデプロイする)
 
 ---
 
-[【ハンズオン】CodeシリーズでECS FargateサービスをBlueGreenデプロイする](/sprint6-file/【ハンズオン】CodeシリーズでECS-FargateサービスをBlueGreenデプロイする)
+[【ハンズオン】CodeシリーズでECS FargateサービスをBlueGreenデプロイする](/sprint-06-file/【ハンズオン】CodeシリーズでECS-FargateサービスをBlueGreenデプロイする)
 
 ---
 
