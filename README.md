@@ -15,7 +15,7 @@
 - [スプリント7](https://github.com/CloudTechOrg/course-info/blob/main/sprint-07.md)
 - [スプリント8](https://github.com/CloudTechOrg/course-info/blob/main/sprint-08.md)
 - [スプリント9](https://github.com/CloudTechOrg/course-info/blob/main/sprint-09.md)
-<!--- [スプリント10](https://github.com/CloudTechOrg/course-info/blob/main/sprint-10.md) -->
+- [スプリント10](https://github.com/CloudTechOrg/course-info/blob/main/sprint-10.md)
 <!--- [スプリント11](https://github.com/CloudTechOrg/course-info/blob/main/sprint-11.md)-->
 - [スプリント12](https://github.com/CloudTechOrg/course-info/blob/main/sprint-12.md)
 - [スプリント13](https://github.com/CloudTechOrg/course-info/blob/main/sprint-13-extra.md)
