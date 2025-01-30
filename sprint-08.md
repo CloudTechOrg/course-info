@@ -17,3 +17,8 @@ def lambda_handler(event, context):
     }
 ``` 
 </details>
+
+### クラウドエンジニアのためのPython講座
+
+ファイル等は以下にまとめられています。  
+[クラウドエンジニアのためのPython講座リポジトリへのリンク](https://github.com/CloudTechOrg/course-python)
