@@ -27,6 +27,20 @@ unalias aws-cli
 【ハンズオン】Lambda同期呼び出し/非同期呼び出し
 </summary> 
 
+```python
+import json
+
+print('Loading function')
+
+def lambda_handler(event, context):
+    #print("Received event: " + json.dumps(event, indent=2))
+    print("value1 = " + event['key1'])
+    print("value2 = " + event['key2'])
+    print("value3 = " + event['key3'])
+    return event['key1']  # Echo back the first key value
+    #raise Exception('Something went wrong')
+```
+
 ```bash
 ■DryRun実行
 aws lambda invoke --function-name hello-python --invocation-type DryRun --payload '{ "key1": "value1","key2": "value2","key3": "value3" }' --cli-binary-format raw-in-base64-out response.json
