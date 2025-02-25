@@ -1,5 +1,5 @@
 <details>
-  <summary> 【Terraform】インストール（Mac/Win）
+  <summary> 【Terraform-3】インストール（Mac/Win）
   </summary> 
 
 #### Mac向けコマンド
@@ -20,7 +20,7 @@ https://developer.hashicorp.com/terraform/install?product_intent=terraform
 ---
 
 <details>
-  <summary> 【Terraform】ハンズオン-VPC,サブネットの作成【20:27】
+  <summary> 【Terraform-5】ハンズオン-VPC,サブネットの作成【20:27】
   </summary> 
 
 #### プロバイダブロックの作成
@@ -80,7 +80,7 @@ resource "aws_subnet" "terra_subnet" {
 ---
 
 <details>
-  <summary> 【Terraform】ハンズオン-Webサーバーの作成（locals,variablesブロック）【13:41】
+  <summary> 【Terraform-7】ハンズオン-Webサーバーの作成（locals,variablesブロック）【13:41】
   </summary> 
 
 #### アクセスキー設定
@@ -341,6 +341,399 @@ HTML
 </details>
 
 ---
+
+<details>
+  <summary> 【Terraform-9】ハンズオン-ローカルモジュールを活用した複数環境の作成
+  </summary> 
+
+プロセス環境変数の設定
+```powershell
+$Env:AWS_ACCESS_KEY_ID="アクセスキー"
+$Env:AWS_SECRET_ACCESS_KEY="シークレットアクセスキー"
+```
+
+VPCとサブネットの作成
+```terraform
+provider "aws" {
+ region = "ap-northeast-1"
+}
+
+resource "aws_vpc" "web_vpc" {
+
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "vpc"
+  }
+}
+
+resource "aws_subnet" "web_subnet" {
+
+  vpc_id = aws_vpc.web_vpc.id
+
+  cidr_block = "10.0.0.0/24"
+  tags = {
+    Name = "subnet"
+  }
+}
+```
+
+ローカル変数app_nameを追加
+```terraform
+provider "aws" {
+ region = "ap-northeast-1"
+}
+
+# 追加
+locals{
+    app_name = "web"
+}
+
+resource "aws_vpc" "web_vpc" {
+
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "${local.app_name}-vpc" # 変更
+  }
+}
+
+resource "aws_subnet" "web_subnet" {
+
+  vpc_id = aws_vpc.web_vpc.id
+
+  cidr_block = "10.0.0.0/24"
+  tags = {
+    Name = "${local.app_name}-subnet" # 変更
+  }
+}
+```
+
+
+入力変数envを追加
+```terraform
+provider "aws" {
+ region = "ap-northeast-1"
+}
+
+# 追加
+variable "env" {
+    type = string
+    default = "handson"
+}
+
+locals{
+    app_name = "web"
+}
+
+resource "aws_vpc" "web_vpc" {
+
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "${var.env}-${local.app_name}-vpc" # 変更
+  }
+}
+
+resource "aws_subnet" "web_subnet" {
+
+  vpc_id = aws_vpc.web_vpc.id
+
+  cidr_block = "10.0.0.0/24"
+  tags = {
+    Name = "${var.env}-${local.app_name}-subnet" # 変更
+  }
+}
+```
+
+ローカル変数 name_prefix = "${var.env}-${local.app_name} を追加
+```
+provider "aws" {
+ region = "ap-northeast-1"
+}
+
+variable "env" {
+    type = string
+    default = "prod"
+}
+
+locals{
+    app_name = "handson-web" # 追加
+    name_prefix = "${var.env}-${local.app_name}"
+}
+
+resource "aws_vpc" "web_vpc" {
+
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "${local.name_prefix}-vpc" # 変更
+  }
+}
+
+resource "aws_subnet" "web_subnet" {
+
+  vpc_id = aws_vpc.web_vpc.id
+
+  cidr_block = "10.0.0.0/24"
+  tags = {
+    Name = "${local.name_prefix}-public_subnet" # 変更
+  }
+}
+```
+
+
+webサーバ用のmain.tf
+```
+provider "aws" {
+ region = "ap-northeast-1"
+}
+
+variable "env" {
+    type = string
+    default = "handson"
+}
+
+variable "myip" {
+    type = string
+    description = "Check-> https://www.whatismyip.com/"
+}
+
+locals{
+    app_name = "web"
+    name_prefix = "${var.env}-${local.app_name}"
+}
+
+resource "aws_vpc" "web_vpc" {
+
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "${local.name_prefix}-vpc"
+  }
+}
+
+resource "aws_subnet" "web_subnet" {
+
+  vpc_id = aws_vpc.web_vpc.id
+  map_public_ip_on_launch = true
+
+  cidr_block = "10.0.0.0/24"
+  tags = {
+    Name = "${local.name_prefix}-public_subnet"
+  }
+}
+
+resource "aws_route_table" "web_public_rtb" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.web_igw.id
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-public-rtb"
+  }
+}
+
+resource "aws_route_table_association" "web_public_rtb_assoc" {
+  subnet_id      = aws_subnet.web_subnet.id
+  route_table_id = aws_route_table.web_public_rtb.id
+}
+
+resource "aws_internet_gateway" "web_igw" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  tags = {
+    Name = "${local.name_prefix}-igw"
+  }
+}
+
+resource "aws_security_group" "web_sg" {
+  vpc_id = aws_vpc.web_vpc.id
+
+  name        = "${local.name_prefix}-sg"
+  description = "Allow HTTP access from my IP"
+
+  ingress {
+    description = "Allow HTTP traffic from my IP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["${var.myip}/32"] # var.myipからのHTTPアクセスを許可
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-sg"
+  }
+}
+
+resource "aws_instance" "web_ec2" {
+  ami                         = "ami-094dc5cf74289dfbc" 
+  instance_type               = "t2.micro"
+  security_groups             = [aws_security_group.web_sg.id]
+  subnet_id = aws_subnet.web_subnet.id
+
+  user_data = <<-EOF
+#!/bin/bash
+dnf update -y
+dnf install -y nginx
+systemctl enable --now nginx
+cat <<HTML > /usr/share/nginx/html/index.html
+    <div style="text-align:center; font-size:1.5em; color:#333; margin:20px; line-height:1.8;">
+        <b>env: ${var.env}</b><br>
+        <b>app_name: ${local.app_name}</b><br>
+        <b>name_prefix: ${local.name_prefix}</b><br>
+        <b>myip: ${var.myip}</b>
+    </div>
+HTML
+  EOF
+
+  tags = {
+    Name = "${local.name_prefix}-ec2"
+  }
+}
+```
+
+</details>
+
+---
+
+<details>
+  <summary> 【Terraform-11】ハンズオン-既存リソースの利用(importブロック, dataブロック)
+  </summary> 
+
+
+プロセス環境変数の設定
+```powershell
+$Env:AWS_ACCESS_KEY_ID="アクセスキー"
+$Env:AWS_SECRET_ACCESS_KEY="シークレットアクセスキー"
+```
+
+インポート用のmain.tf
+```terraform
+provider "aws" {
+  region = "ap-northeast-1"
+}
+
+import {
+  id = "【vpcid】"
+  to = aws_vpc.imported_vpc
+}
+```
+
+
+修正前generated.tf
+```terraform
+# __generated__ by Terraform
+# Please review these resources and move them into your main configuration files.
+# __generated__ by Terraform
+resource "aws_vpc" "imported_vpc" {
+  assign_generated_ipv6_cidr_block     = false
+  cidr_block                           = "10.0.0.0/24"
+  enable_dns_hostnames                 = false
+  enable_dns_support                   = true
+  enable_network_address_usage_metrics = false
+  instance_tenancy                     = "default"
+  ipv4_ipam_pool_id                    = null
+  ipv4_netmask_length                  = null
+  ipv6_cidr_block                      = null
+  ipv6_cidr_block_network_border_group = null
+  ipv6_ipam_pool_id                    = null
+  ipv6_netmask_length                  = 0
+  tags = {
+    Name = "handson-vpc"
+  }
+  tags_all = {
+    Name = "handson-vpc"
+  }
+}
+```
+
+修正後(generated.tf)
+```terraform
+resource "aws_vpc" "imported_vpc" {
+  cidr_block           = "10.0.0.0/24"
+  
+  tags = {
+    Name = "handson-vpc"
+  }
+}
+```
+
+dataブロックハンズオン用main.tf
+```terraform
+provider "aws" {
+  region = "ap-northeast-1"
+}
+
+data "aws_vpc" "existing_vpc" {
+  filter {
+    name   = "tag:Name"
+    values = ["handson-vpc"]
+  }
+}
+
+resource "aws_subnet" "data_subnet" {
+
+  vpc_id = data.aws_vpc.existing_vpc.id
+  cidr_block             = "10.0.0.0/24"
+
+  tags = {
+    Name = "handson-subnet"
+  }
+}
+```
+
+
+</details>
+
+---
+
+<details>
+  <summary> 【Terraform-13】ハンズオン-リモートバックエンドの設定(terraformブロック)
+  </summary> 
+
+
+プロセス環境変数の設定
+```powershell
+$Env:AWS_ACCESS_KEY_ID="アクセスキー"
+$Env:AWS_SECRET_ACCESS_KEY="シークレットアクセスキー"
+```
+
+リモートバックエンドの設定を含んだmain.tf
+```terraform
+provider "aws" {
+  region = "ap-northeast-1"
+}
+
+terraform {
+  backend "s3" {
+    bucket        = "【作成したS3バケットの名前】"
+    key           = "test/terraform.tfstate"
+    region        = "ap-northeast-1"
+    use_lockfile  = true
+  }
+}
+
+動作確認用
+```terraform
+resource "aws_vpc" "remote_state_test_vpc" {
+  cidr_block           = "10.0.0.0/24"
+  tags = {
+    Name = "remote_state_test_vpc"
+  }
+}
+```
+
+
+</details>
+
+---
+
 
 <details>
   <summary> 【CloudFormation】CloudFormationでVPCを作成する
