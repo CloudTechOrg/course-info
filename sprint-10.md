@@ -381,6 +381,23 @@ aws sqs send-message-batch --queue-url https://sqs.ap-northeast-1.amazonaws.com/
 【ハンズオン】Step Functionsを使用したLambdaのハンドリング【25:36】
 </summary> 
 
+■Lambda (sonomama)
+```python
+def lambda_handler(event, context):
+    """
+    Judge-Lambda:
+    入力された id と category をそのまま返却します。
+    """
+    id_value = event.get("id")
+    category = event.get("category")
+    
+    if not id_value:
+        return {"error": "Missing id parameter"}
+    if not category:
+        return {"error": "Missing category parameter"}
+    
+    return {"id": id_value, "category": category}
+```
 
 ■テストイベント
 ```json
@@ -389,6 +406,26 @@ aws sqs send-message-batch --queue-url https://sqs.ap-northeast-1.amazonaws.com/
     "category": "質問"
 }
 ```
+
+■Lambda (last)
+```python
+def lambda_handler(event, context):
+    """
+    last-Lambda:
+    入力された id を元に、問い合わせに対する回答を生成します。
+    ※このサンプルでは、シンプルな固定の回答を返却します。
+    """
+    id_value = event.get("id")
+    if not id_value:
+        return {"error": "Missing id parameter"}
+
+    # 回答生成ロジック
+    answer = "こちらが回答です。"
+    
+    # 結果を返却（id と回答）
+    return {"id": id_value, "answer": answer}
+```
+
 
 ■ステートマシン コード
 
@@ -432,7 +469,7 @@ aws sqs send-message-batch --queue-url https://sqs.ap-northeast-1.amazonaws.com/
 }
 ```
 
-■コマンド
+■Lambda (jikkou)
 ```python
 import json
 import boto3
