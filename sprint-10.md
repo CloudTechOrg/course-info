@@ -383,10 +383,12 @@ aws sqs send-message-batch --queue-url https://sqs.ap-northeast-1.amazonaws.com/
 
 
 ■テストイベント
+```json
 {
     "id": "123",
     "category": "質問"
 }
+```
 
 ■ステートマシン コード
 
