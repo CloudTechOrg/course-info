@@ -375,3 +375,119 @@ aws sqs send-message-batch --queue-url https://sqs.ap-northeast-1.amazonaws.com/
 
 </details>
 
+
+<details>
+  <summary> 
+【ハンズオン】Step Functionsを使用したLambdaのハンドリング【25:36】
+</summary> 
+
+
+■テストイベント
+{
+    "id": "123",
+    "category": "質問"
+}
+
+■ステートマシン コード
+
+```json
+{
+  "Comment": "Step Functions state machine for Judge and Response",
+  "StartAt": "sonomamaTask",
+  "States": {
+    "sonomamaTask": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-northeast-1:715731572821:function:sonomama-Lambda",
+      "Next": "CheckCategory",
+      "Parameters": {
+        "id.$": "$.id"
+      }
+    },
+    "CheckCategory": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.category",
+          "StringEquals": "質問",
+          "Next": "lastTask"
+        }
+      ],
+      "Default": "EndState"
+    },
+    "lastTask": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-northeast-1:715731572821:function:last-Lambda",
+      "End": true,
+      "Parameters": {
+        "id.$": "$.id"
+      }
+    },
+    "EndState": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}
+```
+
+■コマンド
+```python
+import json
+import boto3
+
+# Step Functionsクライアントの初期化
+client = boto3.client('stepfunctions')
+
+# 実際のステートマシンARNに置き換えてください
+STATE_MACHINE_ARN = 'arn:aws:states:ap-northeast-1:715731572821:stateMachine:cloudtech-state'
+
+def lambda_handler(event, context):
+    """
+    このLambdaは、入力イベントから"id"を取得し、
+    カテゴリ（本例では直打ち）を取得した後、
+    指定のStep Functionsステートマシンを起動します。
+    """
+    id_value = event.get("id")
+    if not id_value:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Missing id parameter"})
+        }
+    
+    # カテゴリ判定ロジック（本例では常に「質問」）
+    category = "質問"
+    
+    # Step Functionsに渡す入力パラメータを作成（id と category を含む）
+    input_payload = json.dumps({
+        "id": id_value,
+        "category": category
+    })
+    
+    try:
+        response = client.start_execution(
+            stateMachineArn=STATE_MACHINE_ARN,
+            input=input_payload
+        )
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": "Step Functions execution started",
+                "executionArn": response["executionArn"]
+            })
+        }
+        except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }
+```
+
+■ステートマシンに付与するIAMポリシー
+```json
+{
+    "Effect": "Allow",
+    "Action": "states:StartExecution",
+    "Resource": "arn:aws:states:ap-northeast-1:715731572821:stateMachine:YourStateMachineName"
+}
+```
+</details>
