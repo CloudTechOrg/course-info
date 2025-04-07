@@ -439,7 +439,8 @@ def lambda_handler(event, context):
       "Resource": "arn:aws:lambda:ap-northeast-1:715731572821:function:sonomama-Lambda",
       "Next": "CheckCategory",
       "Parameters": {
-        "id.$": "$.id"
+        "id.$": "$.id",
+        "category.$": "$.category"
       }
     },
     "CheckCategory": {
@@ -514,7 +515,7 @@ def lambda_handler(event, context):
                 "executionArn": response["executionArn"]
             })
         }
-        except Exception as e:
+    except Exception as e:
         return {
             "statusCode": 500,
             "body": json.dumps({"error": str(e)})
