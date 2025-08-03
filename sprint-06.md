@@ -1,3 +1,36 @@
+#### 【ハンズオン】CI/CD初級編/CopePipelineとCodeBuildでECSタスクをデプロイしよう
+[https://github.com/CloudTechOrg/container-sample](https://github.com/CloudTechOrg/container-sample)
+
+<details>
+  <summary> IAMポリシー
+  </summary> 
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetRepositoryPolicy",
+                "ecr:DescribeRepositories",
+                "ecr:ListImages",
+                "ecr:DescribeImages",
+                "ecr:BatchGetImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload",
+                "ecr:PutImage"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+</details>
+
+---
+
 [【ハンズオン】CodeシリーズでS3バケットの静的ウェブサイトホスティングを自動デプロイする](/sprint-06-file/【ハンズオン】CodeシリーズでS3バケットの静的ウェブサイトホスティングを自動デプロイする)
 
 ---

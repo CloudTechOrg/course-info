@@ -53,5 +53,8 @@
 
 ---
 #### 【Docker-11】APIサーバをECSにデプロイ【10:09】
-[https://github.com/CloudTechOrg/course-docker/tree/main/12_ApiScaling](https://github.com/CloudTechOrg/course-docker/tree/main/12_ApiScaling)
+[https://github.com/CloudTechOrg/course-docker/tree/main/11_ApiDeploy](https://github.com/CloudTechOrg/course-docker/tree/main/11_ApiDeploy)
 
+---
+#### 【Docker-12】ECSコンテナの冗長化
+[https://github.com/CloudTechOrg/course-docker/tree/main/12_ApiScaling](https://github.com/CloudTechOrg/course-docker/tree/main/12_ApiScaling)

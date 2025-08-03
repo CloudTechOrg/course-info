@@ -81,114 +81,115 @@
 </details>
 
 <details>
-  <summary> 
-【ハンズオン】AWS STS/sts:AssumeRoleアクション深掘りハンズオン
-</summary> 
+    <summary> 
+  【ハンズオン】AWS STS/sts:AssumeRoleアクション深掘りハンズオン
+    </summary> 
 
-#### Hoka-SSM-Policy
+  #### Hoka-SSM-Policy
 
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": "sts:AssumeRole",
-            "Resource": "arn:aws:iam::216989122692:role/Hoka-SSM-Role"
-        }
-    ]
-}
-```
+  ```json
+  {
+      "Version": "2012-10-17",
+      "Statement": [
+          {
+              "Effect": "Allow",
+              "Action": "sts:AssumeRole",
+              "Resource": "arn:aws:iam::216989122692:role/Hoka-SSM-Role"
+          }
+      ]
+  }
+  ```
 
-#### Hoka-SSM-Roleの信頼ポリシー
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": "arn:aws:iam::715731572821:role/My-EC2-Role"
-            },
-            "Action": "sts:AssumeRole"
-        }
-    ]
-}
-```
+  #### Hoka-SSM-Roleの信頼ポリシー
+  ```json
+  {
+      "Version": "2012-10-17",
+      "Statement": [
+          {
+              "Effect": "Allow",
+              "Principal": {
+                  "AWS": "arn:aws:iam::715731572821:role/My-EC2-Role"
+              },
+              "Action": "sts:AssumeRole"
+          }
+      ]
+  }
+  ```
 
-#### コマンド
-```bash
-aws sts assume-role 
-  --role-arn "arn:aws:iam::216989122692:role/Hoka-SSM-Role" 
-  --role-session-name "demo-session"
-```
+  #### コマンド
+  ```bash
+  aws sts assume-role 
+    --role-arn "arn:aws:iam::216989122692:role/Hoka-SSM-Role" 
+    --role-session-name "demo-session"
+  ```
 
-#### コマンド
-```bash
-unset AWS_ACCESS_KEY_ID
-unset AWS_SECRET_ACCESS_KEY
-unset AWS_SESSION_TOKEN
-```
+  #### コマンド
+  ```bash
+  unset AWS_ACCESS_KEY_ID
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_SESSION_TOKEN
+  ```
 
-#### Bashスクリプト
-```bash
-#!/bin/bash
+  #### Bashスクリプト
+  ```bash
+  #!/bin/bash
 
-ASSUME_ROLE_OUTPUT=$(aws sts assume-role 
-  --role-arn "arn:aws:iam::216989122692:role/Hoka-SSM-Role" 
-  --role-session-name "demo-session")
+  ASSUME_ROLE_OUTPUT=$(aws sts assume-role 
+    --role-arn "arn:aws:iam::216989122692:role/Hoka-SSM-Role" 
+    --role-session-name "demo-session")
 
-AWS_ACCESS_KEY_ID=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.AccessKeyId')
-AWS_SECRET_ACCESS_KEY=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.SecretAccessKey')
-AWS_SESSION_TOKEN=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.SessionToken')
+  AWS_ACCESS_KEY_ID=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.AccessKeyId')
+  AWS_SECRET_ACCESS_KEY=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.SecretAccessKey')
+  AWS_SESSION_TOKEN=$(echo $ASSUME_ROLE_OUTPUT | jq -r '.Credentials.SessionToken')
 
-export AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY
-export AWS_SESSION_TOKEN
+  export AWS_ACCESS_KEY_ID
+  export AWS_SECRET_ACCESS_KEY
+  export AWS_SESSION_TOKEN
 
-# ParameterStoreにアクセスしてリストを取得
-aws ssm get-parameter --name test
-```
+  # ParameterStoreにアクセスしてリストを取得
+  aws ssm get-parameter --name test
+  ```
 
-#### Lambda関数
-```python
-import boto3
-import json
+  #### Lambda関数
+  ```python
+  import boto3
+  import json
 
-def lambda_handler(event, context):
-    # STSクライアントを作成し、他アカウントのIAMロールをAssumeする
-    sts_client = boto3.client('sts')
-    
-    # AssumeRoleを使って一時的な認証情報を取得
-    assumed_role = sts_client.assume_role(
-        RoleArn="arn:aws:iam::216989122692:role/Hoka-SSM-Role",  # 他アカウントのロールARN
-        RoleSessionName="AssumeRoleSession"
-    )
-    
-    # 一時的な認証情報を使ってSSMクライアントを作成
-    credentials = assumed_role['Credentials']
-    ssm_client = boto3.client(
-        'ssm',
-        aws_access_key_id=credentials['AccessKeyId'],
-        aws_secret_access_key=credentials['SecretAccessKey'],
-        aws_session_token=credentials['SessionToken']
-    )
-    
-    # SSMパラメータ 'test' を取得
-    response = ssm_client.get_parameter(
-        Name='test',  # 取得したいSSMパラメータの名前
-        WithDecryption=True  # 暗号化されたパラメータの場合は復号化する
-    )
-    
-    # パラメータの値を取得
-    parameter_value = response['Parameter']['Value']
-    
-    # 結果を返す
-    return {
-        'statusCode': 200,
-        'body': json.dumps({'ParameterValue': parameter_value}),
-        'headers': {
-            'Content-Type': 'application/json'
-        }
-    }
-```
+  def lambda_handler(event, context):
+      # STSクライアントを作成し、他アカウントのIAMロールをAssumeする
+      sts_client = boto3.client('sts')
+      
+      # AssumeRoleを使って一時的な認証情報を取得
+      assumed_role = sts_client.assume_role(
+          RoleArn="arn:aws:iam::216989122692:role/Hoka-SSM-Role",  # 他アカウントのロールARN
+          RoleSessionName="AssumeRoleSession"
+      )
+      
+      # 一時的な認証情報を使ってSSMクライアントを作成
+      credentials = assumed_role['Credentials']
+      ssm_client = boto3.client(
+          'ssm',
+          aws_access_key_id=credentials['AccessKeyId'],
+          aws_secret_access_key=credentials['SecretAccessKey'],
+          aws_session_token=credentials['SessionToken']
+      )
+      
+      # SSMパラメータ 'test' を取得
+      response = ssm_client.get_parameter(
+          Name='test',  # 取得したいSSMパラメータの名前
+          WithDecryption=True  # 暗号化されたパラメータの場合は復号化する
+      )
+      
+      # パラメータの値を取得
+      parameter_value = response['Parameter']['Value']
+      
+      # 結果を返す
+      return {
+          'statusCode': 200,
+          'body': json.dumps({'ParameterValue': parameter_value}),
+          'headers': {
+              'Content-Type': 'application/json'
+          }
+      }
+  ```
+</details>
