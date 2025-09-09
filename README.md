@@ -6,7 +6,7 @@
 
 ## スプリント一覧
 
-<!-- - [スプリント1](https://github.com/CloudTechOrg/course-info/blob/main/sprint-01.md) -->
+- [スプリント1](https://github.com/CloudTechOrg/course-info/blob/main/sprint-01.md)
 - [スプリント2（データベースと認証）](https://github.com/CloudTechOrg/course-info/blob/main/sprint-02.md)
 - [スプリント3（冗長化構成）](https://github.com/CloudTechOrg/course-info/blob/main/sprint-03.md)
 - [スプリント4（コンテンツ配信）](https://github.com/CloudTechOrg/course-info/blob/main/sprint-04.md)
