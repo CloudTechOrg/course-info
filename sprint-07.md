@@ -346,162 +346,24 @@ HTML
   <summary> 【Terraform-9】ハンズオン-ローカルモジュールを活用した複数環境の作成
   </summary> 
 
-プロセス環境変数の設定
+#### プロセス環境変数の設定
 ```powershell
 $Env:AWS_ACCESS_KEY_ID="アクセスキー"
 $Env:AWS_SECRET_ACCESS_KEY="シークレットアクセスキー"
 ```
 
-VPCとサブネットの作成
+#### webモジュール用(main.tf)
 ```terraform
 provider "aws" {
- region = "ap-northeast-1"
+  region = "ap-northeast-1"
+}
+
+locals {
+  app_name = "web"
+  name_prefix = "${var.env}-${local.app_name}"
 }
 
 resource "aws_vpc" "web_vpc" {
-
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "vpc"
-  }
-}
-
-resource "aws_subnet" "web_subnet" {
-
-  vpc_id = aws_vpc.web_vpc.id
-
-  cidr_block = "10.0.0.0/24"
-  tags = {
-    Name = "subnet"
-  }
-}
-```
-
-ローカル変数app_nameを追加
-```terraform
-provider "aws" {
- region = "ap-northeast-1"
-}
-
-# 追加
-locals{
-    app_name = "web"
-}
-
-resource "aws_vpc" "web_vpc" {
-
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "${local.app_name}-vpc" # 変更
-  }
-}
-
-resource "aws_subnet" "web_subnet" {
-
-  vpc_id = aws_vpc.web_vpc.id
-
-  cidr_block = "10.0.0.0/24"
-  tags = {
-    Name = "${local.app_name}-subnet" # 変更
-  }
-}
-```
-
-
-入力変数envを追加
-```terraform
-provider "aws" {
- region = "ap-northeast-1"
-}
-
-# 追加
-variable "env" {
-    type = string
-    default = "handson"
-}
-
-locals{
-    app_name = "web"
-}
-
-resource "aws_vpc" "web_vpc" {
-
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "${var.env}-${local.app_name}-vpc" # 変更
-  }
-}
-
-resource "aws_subnet" "web_subnet" {
-
-  vpc_id = aws_vpc.web_vpc.id
-
-  cidr_block = "10.0.0.0/24"
-  tags = {
-    Name = "${var.env}-${local.app_name}-subnet" # 変更
-  }
-}
-```
-
-ローカル変数 name_prefix = "${var.env}-${local.app_name} を追加
-```
-provider "aws" {
- region = "ap-northeast-1"
-}
-
-variable "env" {
-    type = string
-    default = "prod"
-}
-
-locals{
-    app_name = "handson-web" # 追加
-    name_prefix = "${var.env}-${local.app_name}"
-}
-
-resource "aws_vpc" "web_vpc" {
-
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "${local.name_prefix}-vpc" # 変更
-  }
-}
-
-resource "aws_subnet" "web_subnet" {
-
-  vpc_id = aws_vpc.web_vpc.id
-
-  cidr_block = "10.0.0.0/24"
-  tags = {
-    Name = "${local.name_prefix}-public_subnet" # 変更
-  }
-}
-```
-
-
-webサーバ用のmain.tf
-```
-provider "aws" {
- region = "ap-northeast-1"
-}
-
-variable "env" {
-    type = string
-    default = "handson"
-}
-
-variable "myip" {
-    type = string
-    description = "Check-> https://www.whatismyip.com/"
-}
-
-locals{
-    app_name = "web"
-    name_prefix = "${var.env}-${local.app_name}"
-}
-
-resource "aws_vpc" "web_vpc" {
-
   cidr_block = "10.0.0.0/16"
   tags = {
     Name = "${local.name_prefix}-vpc"
@@ -509,10 +371,8 @@ resource "aws_vpc" "web_vpc" {
 }
 
 resource "aws_subnet" "web_subnet" {
-
   vpc_id = aws_vpc.web_vpc.id
   map_public_ip_on_launch = true
-
   cidr_block = "10.0.0.0/24"
   tags = {
     Name = "${local.name_prefix}-public_subnet"
@@ -539,7 +399,6 @@ resource "aws_route_table_association" "web_public_rtb_assoc" {
 
 resource "aws_internet_gateway" "web_igw" {
   vpc_id = aws_vpc.web_vpc.id
-
   tags = {
     Name = "${local.name_prefix}-igw"
   }
@@ -547,7 +406,6 @@ resource "aws_internet_gateway" "web_igw" {
 
 resource "aws_security_group" "web_sg" {
   vpc_id = aws_vpc.web_vpc.id
-
   name        = "${local.name_prefix}-sg"
   description = "Allow HTTP access from my IP"
 
@@ -582,19 +440,64 @@ resource "aws_instance" "web_ec2" {
 dnf update -y
 dnf install -y nginx
 systemctl enable --now nginx
-cat <<HTML > /usr/share/nginx/html/index.html
+cat <<EOG > /usr/share/nginx/html/index.html
     <div style="text-align:center; font-size:1.5em; color:#333; margin:20px; line-height:1.8;">
         <b>env: ${var.env}</b><br>
         <b>app_name: ${local.app_name}</b><br>
         <b>name_prefix: ${local.name_prefix}</b><br>
         <b>myip: ${var.myip}</b>
     </div>
-HTML
-  EOF
+EOG
+EOF
 
   tags = {
     Name = "${local.name_prefix}-ec2"
   }
+}
+```
+
+#### webモジュール用(variables.tf)
+```terraform
+variable "env" {
+  type = string
+}
+
+variable "myip" {
+  type = string
+}
+```
+
+#### webモジュール用(output.tf)
+```terraform
+output "web_ec2_public_ip" {
+  value = aws_instance.web_ec2.public_ip
+}
+```
+
+#### ルートモジュール用(main.tf)
+```terraform
+module "web" {
+  source = "../../modules/web"
+  myip = var.myip
+  env = var.env
+}
+```
+
+#### グローバルIPアドレス確認用
+```
+https://www.whatismyip.com/
+```
+
+#### ルートモジュール用(terraform.tfvars)
+```terraform
+myip = "自分のIPアドレス"
+env = "dev"
+```
+
+#### ルートモジュール用(output.tf)
+```terraform
+output "web_addr" {
+  value = "http://${module.web.web_ec2_public_ip}"
 }
 ```
 
