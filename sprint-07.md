@@ -1008,7 +1008,7 @@ aws cloudformation deploy –template-file stack.yaml –stack-name RDSmySQLcrea
 
 <details>
   <summary> 
-【AWS CDK入門】セットアップ&インストール＆VPCを作ってみよう
+【CDKハンズオン】環境セットアップ/Node.js・AWS CLI・CDKインストール/cdk init・bootstrap/VPC定義/cdk synth・deploy【32:01】
 </summary>
 
 #### 参考文献リンク
