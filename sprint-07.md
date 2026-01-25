@@ -1004,4 +1004,105 @@ aws cloudformation deploy –template-file stack.yaml –stack-name RDSmySQLcrea
 ```
 </details>
 
+---
+
+<details>
+  <summary> 
+【AWS CDK入門】セットアップ&インストール＆VPCを作ってみよう
+</summary>
+
+#### 参考文献リンク
+- Node.js 公式: https://nodejs.org/
+- AWS CLI インストールガイド: https://docs.aws.amazon.com/ja_jp/cli/latest/userguide/getting-started-install.html
+- aws loginコマンド: https://aws.amazon.com/jp/blogs/news/simplified-developer-access-to-aws-with-aws-login/
+- AWS CDK ガイド (Getting Started): https://docs.aws.amazon.com/ja_jp/cdk/v2/guide/getting-started.html
+- CDK API Reference (v2): https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html
+- VPC クラス API Reference: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Vpc.html
+
+#### Node.jsのインストール
+```bash
+# nvmをダウンロードしてインストールする：
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+# シェルを再起動する代わりに実行する
+\. "$HOME/.nvm/nvm.sh"
+
+# Node.jsをダウンロードしてインストールする：
+nvm install 24
+
+# Node.jsのバージョンを確認する：
+node -v # "v24.13.0"が表示される。
+
+# npmのバージョンを確認する：
+npm -v # "11.6.2"が表示される。
+```
+
+#### AWS CLIのバージョン確認
+```bash
+aws --version
+# バージョンが2.32.0以上であること(そうでないとaws login コマンドが利用できないため)
+```
+
+#### AWS 認証設定
+```bash
+aws login
+
+# 東京リージョンを指定
+ap-northeast-1
+```
+
+#### 別ターミナルでもNode.jsを利用できるようにする設定（必要な場合）
+```bash
+# ファイルの作成
+touch ~/.zshrc
+
+# .zshrcに追記
+vi ~/.zshrc
+
+# 追記内容
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# 設定の反映
+source ~/.zshrc
+```
+
+#### AWS CDK インストール
+```bash
+npm install -g aws-cdk
+
+# バージョン確認
+cdk --version
+```
+
+#### CDKテンプレートの作成
+```bash
+# テンプレートを展開するディレクトリの作成
+mkdir cdk-handson
+
+# 作成したディレクトリに移動　※作成したディレクトリ内にファイルやディレクトリを作成しないこと
+cd cdk-handson
+
+# テンプレートの作成  言語Typescriptを指定
+cdk init app --language typescript
+```
+
+#### CDKで展開するための準備
+```bash
+cdk bootstrap 
+```
+
+#### テンプレートの生成
+```bash
+cdk synth
+```
+
+#### AWS環境へデプロイ
+```bash
+cdk deploy
+```
+
+</details>
+
 
