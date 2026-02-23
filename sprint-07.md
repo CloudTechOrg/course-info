@@ -1105,4 +1105,47 @@ cdk deploy
 
 </details>
 
+---
+
+<details>
+  <summary> 
+【CDKハンズオン】EC2構築/インスタンスタイプ・AMI設定/VPCサブネット指定/ユーザーデータ/セキュリティグループ/cdk synth・deploy【23:57】
+</summary>
+
+#### 参考文献リンク
+- AWS CDK ガイド (Getting Started): https://docs.aws.amazon.com/ja_jp/cdk/v2/guide/getting-started.html
+- CDK API Reference (v2): https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html
+- EC2 クラス API Reference: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_ec2.Instance.html
+
+#### user-data.sh の中身
+```bash
+#!/bin/bash
+dnf -y update
+dnf -y install php php-mysqlnd php-mbstring php-xml httpd mariadb105
+wget http://ja.wordpress.org/latest-ja.tar.gz -P /tmp/
+tar zxvf /tmp/latest-ja.tar.gz -C /tmp
+cp -r /tmp/wordpress/* /var/www/html/
+chown apache:apache -R /var/www/html
+systemctl enable httpd.service
+systemctl start httpd.service
+```
+
+#### 利用コマンド
+
+テンプレートの生成
+```bash
+cdk synth
+```
+
+AWS環境との差分確認
+```bash
+cdk diff
+```
+
+AWS環境へデプロイ
+```bash
+cdk deploy
+```
+
+</details>
 
