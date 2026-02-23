@@ -1149,3 +1149,40 @@ cdk deploy
 
 </details>
 
+---
+
+<details>
+  <summary> 
+【CDKハンズオン】RDS構築/MySQL・サブネットグループ設定/セキュリティグループ/WordPress初期設定・動作確認/cdk destroy【31:14】
+</summary>
+
+#### 参考文献リンク
+- AWS CDK ガイド (Getting Started): https://docs.aws.amazon.com/ja_jp/cdk/v2/guide/getting-started.html
+- CDK API Reference (v2): https://docs.aws.amazon.com/cdk/api/v2/docs/aws-construct-library.html
+- RDS モジュール API Reference: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_rds-readme.html
+- RDS インスタンス API Reference: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_rds.DatabaseInstance.html
+
+#### 利用コマンド
+
+テンプレートの生成
+```bash
+cdk synth
+```
+
+AWS環境との差分確認
+```bash
+cdk diff
+```
+
+AWS環境へデプロイ
+```bash
+cdk deploy
+```
+
+リソース削除
+```bash
+cdk destroy
+```
+
+</details>
+
