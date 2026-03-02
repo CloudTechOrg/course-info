@@ -1,0 +1,311 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  New Relic Training - APM / Lambda Monitoring
+  Flask (EC2) -> API Gateway -> Lambda -> DynamoDB for distributed tracing.
+  Deploy to default VPC.
+
+Resources:
+  # ============================================================
+  # DynamoDB
+  # ============================================================
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: newrelic-training-items
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      Tags:
+        - Key: Name
+          Value: newrelic-training-dynamodb
+
+  # ============================================================
+  # Lambda
+  # ============================================================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: newrelic-training-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                Resource: !GetAtt DynamoDBTable.Arn
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: newrelic-training-function
+      Runtime: python3.13
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 15
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DynamoDBTable
+      Code:
+        ZipFile: |
+          import json, boto3, uuid, os
+          from datetime import datetime
+
+          ddb = boto3.resource('dynamodb')
+          table = ddb.Table(os.environ['TABLE_NAME'])
+
+          def lambda_handler(event, context):
+              body = json.loads(event.get('body') or '{}')
+              action = body.get('action', '')
+
+              if action == 'write':
+                  item_id = str(uuid.uuid4())[:8]
+                  table.put_item(Item={
+                      'id': item_id,
+                      'timestamp': datetime.now().isoformat(),
+                      'status': 'active'
+                  })
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps({'message': 'Item written successfully', 'id': item_id})
+                  }
+
+              elif action == 'read':
+                  item_id = body.get('id', '')
+                  resp = table.get_item(Key={'id': item_id})
+                  item = resp.get('Item')
+                  if item:
+                      return {'statusCode': 200, 'body': json.dumps(item, default=str)}
+                  return {'statusCode': 404, 'body': json.dumps({'message': 'Item not found'})}
+
+              elif action == 'fail':
+                  raise Exception('Intentional error for New Relic Error Tracking demo')
+
+              return {
+                  'statusCode': 400,
+                  'body': json.dumps({'message': 'Invalid action. Use: write, read, fail'})
+              }
+      Tags:
+        - Key: Name
+          Value: newrelic-training-lambda
+
+  # ============================================================
+  # API Gateway (HTTP API)
+  # ============================================================
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: newrelic-training-api
+      ProtocolType: HTTP
+
+  HttpApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt LambdaFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  HttpApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: POST /lambda
+      Target: !Sub integrations/${HttpApiIntegration}
+
+  HttpApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
+
+  # ============================================================
+  # EC2 IAM (SSM Session Manager)
+  # ============================================================
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: newrelic-training-ec2-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  # ============================================================
+  # EC2
+  # ============================================================
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: No inbound (SSM Session Manager only)
+      Tags:
+        - Key: Name
+          Value: newrelic-training-sg
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !GetAtt EC2SecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: newrelic-training-ec2
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash
+              set -e
+              exec > /var/log/userdata.log 2>&1
+              echo "=== UserData start: $(date) ==="
+
+              API_GW_URL="${ApiEndpoint}"
+              APP_DIR=/home/ec2-user/app
+
+              # ---- Python 3.13 install ----
+              dnf install -y python3.13 python3.13-pip
+
+              # ---- pip symlink ----
+              ln -s /usr/bin/pip3.13 /usr/local/bin/pip
+
+              # ---- Flask app setup ----
+              mkdir -p $APP_DIR
+              pip3.13 install flask gunicorn requests 2>&1
+
+              # ---- Flask app code ----
+              cat > $APP_DIR/app.py << 'FLASK_APP_EOF'
+              from flask import Flask, jsonify, request
+              import time
+              import requests as http_requests
+              import os
+
+              app = Flask(__name__)
+              API_GATEWAY_URL = os.environ.get('API_GATEWAY_URL', '')
+
+              @app.route('/health')
+              def health():
+                  return jsonify({'status': 'healthy'})
+
+              @app.route('/users')
+              def users():
+                  return jsonify([
+                      {'id': 1, 'name': 'Tanaka', 'role': 'Engineer'},
+                      {'id': 2, 'name': 'Suzuki', 'role': 'Manager'},
+                      {'id': 3, 'name': 'Yamada', 'role': 'Designer'},
+                  ])
+
+              @app.route('/slow')
+              def slow():
+                  delay = request.args.get('seconds', 3, type=int)
+                  time.sleep(delay)
+                  return jsonify({'message': f'Waited {delay} seconds', 'delay': delay})
+
+              @app.route('/invoke-lambda', methods=['POST'])
+              def invoke_lambda():
+                  payload = request.get_json(silent=True) or {'action': 'write'}
+                  try:
+                      resp = http_requests.post(
+                          f'{API_GATEWAY_URL}/lambda',
+                          json=payload,
+                          timeout=10
+                      )
+                      return jsonify({
+                          'lambda_status': resp.status_code,
+                          'lambda_response': resp.json()
+                      }), resp.status_code
+                  except Exception as e:
+                      return jsonify({'error': str(e)}), 502
+              FLASK_APP_EOF
+
+              chown -R ec2-user:ec2-user $APP_DIR
+
+              # ---- Systemd service ----
+              cat > /etc/systemd/system/flask-app.service << SYSTEMD_EOF
+              [Unit]
+              Description=New Relic Training - Flask App
+              After=network.target
+
+              [Service]
+              User=ec2-user
+              WorkingDirectory=/home/ec2-user/app
+              Environment=API_GATEWAY_URL=$API_GW_URL
+              ExecStart=/usr/local/bin/gunicorn --bind 127.0.0.1:8000 app:app
+              Restart=always
+              RestartSec=3
+
+              [Install]
+              WantedBy=multi-user.target
+              SYSTEMD_EOF
+
+              systemctl daemon-reload
+              systemctl enable flask-app
+              systemctl start flask-app
+
+              echo "=== UserData complete: $(date) ==="
+            - ApiEndpoint: !GetAtt HttpApi.ApiEndpoint
+
+# ============================================================
+# Outputs
+# ============================================================
+Outputs:
+  EC2InstanceId:
+    Description: EC2 Instance ID (connect via SSM Session Manager)
+    Value: !Ref EC2Instance
+  SSMSessionCommand:
+    Description: AWS CLI command to start SSM session
+    Value: !Sub aws ssm start-session --target ${EC2Instance}
+  ApiGatewayUrl:
+    Description: API Gateway endpoint URL
+    Value: !GetAtt HttpApi.ApiEndpoint
+  LambdaFunctionName:
+    Description: Lambda Function Name
+    Value: !Ref LambdaFunction
+  DynamoDBTableName:
+    Description: DynamoDB Table Name
+    Value: !Ref DynamoDBTable
+  TestCommands:
+    Description: Commands to test after SSM connection
+    Value: |
+      curl http://127.0.0.1:8000/health
+      curl http://127.0.0.1:8000/users
+      curl http://127.0.0.1:8000/slow?seconds=2
+      curl -X POST http://127.0.0.1:8000/invoke-lambda -H "Content-Type: application/json" -d '{"action":"write"}'
+      curl -X POST http://127.0.0.1:8000/invoke-lambda -H "Content-Type: application/json" -d '{"action":"fail"}'

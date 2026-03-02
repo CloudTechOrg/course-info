@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  New Relic Training: Infrastructure Monitoring
+  EC2 with SSM Session Manager for Infrastructure Agent installation.
+  Deploy to default VPC.
+
+Resources:
+  # ============================================================
+  # IAM (SSM Session Manager)
+  # ============================================================
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub newrelic-training-ec2-role-${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
+
+  # ============================================================
+  # EC2
+  # ============================================================
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Training - No inbound (SSM Session Manager only)
+      Tags:
+        - Key: Name
+          Value: newrelic-training-sg
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds:
+        - !GetAtt EC2SecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: newrelic-training-ec2
+
+Outputs:
+  EC2InstanceId:
+    Description: EC2 Instance ID (connect via SSM Session Manager)
+    Value: !Ref EC2Instance
+  SSMSessionCommand:
+    Description: AWS CLI command to start SSM session
+    Value: !Sub aws ssm start-session --target ${EC2Instance}

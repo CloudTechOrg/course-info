@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  New Relic Training: AWS CloudWatch Integration
+  CloudWatch standard metrics verification (EC2 + Lambda).
+  Deploy to default VPC.
+
+Resources:
+  # ============================================================
+  # EC2
+  # ============================================================
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Training - No inbound access
+      Tags:
+        - Key: Name
+          Value: newrelic-training-sg
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      ImageId: '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      SecurityGroupIds:
+        - !GetAtt EC2SecurityGroup.GroupId
+      Tags:
+        - Key: Name
+          Value: newrelic-training-ec2
+
+  # ============================================================
+  # Lambda
+  # ============================================================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub newrelic-training-lambda-role-${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  SimpleLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: newrelic-training-function
+      Runtime: python3.13
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 10
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {"statusCode": 200, "body": "OK"}
+      Tags:
+        - Key: Name
+          Value: newrelic-training-lambda
+
+Outputs:
+  EC2InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref EC2Instance
+  LambdaFunctionName:
+    Description: Lambda Function Name
+    Value: !Ref SimpleLambdaFunction
+  LambdaFunctionArn:
+    Description: Lambda Function ARN
+    Value: !GetAtt SimpleLambdaFunction.Arn
